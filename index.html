@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Redevelopment Calculator</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9; }
+    label { display: block; margin-top: 10px; }
+    input, select { width: 250px; padding: 5px; }
+    button { margin-top: 15px; padding: 10px 20px; }
+    .result { margin-top: 20px; padding: 10px; background: #fff; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+
+<h2>Redevelopment Offer Calculator</h2>
+
+<label>Plot Area (sq.ft.): <input type="number" id="plotArea"  value="88027" /></label>
+<label>Current Built-up Area (sq.ft.): <input type="number" id="builtUpArea" value="81613" /></label>
+<label>Scheme:
+  <select id="scheme">
+    <option value="3.24">33 (7)</option>
+    <option value="5.4">33 (11)</option>
+  </select>
+</label>
+<label>Additional Area Offered to Society (%): <input type="number" id="additionalArea" value="50"/></label>
+<label>Corpus Offered per sq.ft.: <input type="number" id="corpusPerSqft" value="3000"/></label>
+<label>Rent per sq.ft.: <input type="number" id="rentPerSqft" value="160"/></label>
+<label>Annual Increment in Rent (%): <input type="number" id="rentIncrement" value="7"/></label>
+<label>Project Tenure (Years): <input type="number" id="tenure" value="3.5"/></label>
+<label>Shifting Charges per sq.ft.: <input type="number" id="shiftingCharges" value="180" /></label>
+<label>Construction Cost per sq.ft.: <input type="number" id="constructionCost" value="6500"/></label>
+<label>Commercial Area Capping (%): <input type="number" id="commercialCap" value="5"/></label>
+<label>Residential Sale Rate (₹/sq.ft.): <input type="number" id="resRate" value="40000" /></label>
+<label>Commercial Sale Rate (₹/sq.ft.): <input type="number" id="commRate" value="70000"/></label>
+
+
+<button onclick="calculate()">Calculate</button>
+
+<div class="result" id="result"></div>
+
+<script>
+function calculate() {
+  const plotArea = parseFloat(document.getElementById('plotArea').value);
+  const schemeFSI = parseFloat(document.getElementById('scheme').value);
+  const corpusPerSqft = parseFloat(document.getElementById('corpusPerSqft').value);
+  const rentPerSqft = parseFloat(document.getElementById('rentPerSqft').value);
+  const rentIncrement = parseFloat(document.getElementById('rentIncrement').value) / 100;
+  const tenure = parseFloat(document.getElementById('tenure').value);
+  const shiftingCharges = parseFloat(document.getElementById('shiftingCharges').value);
+  const constructionCostPerSqft = parseFloat(document.getElementById('constructionCost').value);
+  const commercialCap = parseFloat(document.getElementById('commercialCap').value) / 100;
+  const resRate = parseFloat(document.getElementById('resRate').value);
+  const commRate = parseFloat(document.getElementById('commRate').value);
+  const additionalAreaPercent = parseFloat(document.getElementById('additionalArea').value) / 100;
+
+  const totalBuiltUp = plotArea * schemeFSI;
+
+  // Society entitlement - base 100% of existing + additional percentage
+  const baseSocietyEntitlement = parseFloat(document.getElementById('builtUpArea').value);
+  const additionalArea = baseSocietyEntitlement * additionalAreaPercent;
+  const societyEntitlement = baseSocietyEntitlement + additionalArea;
+
+  const builderSaleArea = totalBuiltUp - societyEntitlement;
+
+  const commercialArea = builderSaleArea * commercialCap;
+  const residentialArea = builderSaleArea - commercialArea;
+
+  // Revenue
+  const residentialSaleValue = residentialArea * resRate;
+  const commercialSaleValue = commercialArea * commRate;
+  const totalRevenue = residentialSaleValue + commercialSaleValue;
+
+  // Construction cost - total built-up area
+  const totalConstructionCost = totalBuiltUp * constructionCostPerSqft;
+
+  // Rent payout with increment
+  let totalRent = 0;
+  let currentRent = rentPerSqft * plotArea;
+  for (let i = 0; i < tenure; i++) {
+    totalRent += currentRent;
+    currentRent += currentRent * rentIncrement;
+  }
+
+  // Corpus and shifting
+  const totalCorpus = corpusPerSqft * plotArea;
+  const totalShifting = shiftingCharges * plotArea;
+
+  // Other Costs based on % of revenue
+  const tdrPremiums = totalRevenue * 0.17;
+  const govPremiums = totalRevenue * 0.11;
+  const financeCost = totalRevenue * 0.09;
+  const marketing = totalRevenue * 0.04;
+  const legalMisc = totalRevenue * 0.03;
+
+  // Total Project Cost
+  const totalCost = totalConstructionCost + totalRent + totalCorpus + totalShifting +
+                    tdrPremiums + govPremiums + financeCost + marketing + legalMisc;
+
+  const profit = totalRevenue - totalCost;
+  const profitMargin = (profit / totalRevenue) * 100;
+
+  document.getElementById('result').innerHTML = `
+    <strong>Total Built-up Area:</strong> ${totalBuiltUp.toFixed(2)} sq.ft.<br>
+    <strong>Society Entitlement (including additional):</strong> ${societyEntitlement.toFixed(2)} sq.ft.<br>
+    <strong>Residential Sale Value:</strong> ₹${residentialSaleValue.toLocaleString()}<br>
+    <strong>Commercial Sale Value:</strong> ₹${commercialSaleValue.toLocaleString()}<br>
+    <strong>Total Sale Revenue:</strong> ₹${totalRevenue.toLocaleString()}<br><br>
+
+    <strong>Total Construction Cost:</strong> ₹${totalConstructionCost.toLocaleString()}<br>
+    <strong>Total Rent Payout:</strong> ₹${totalRent.toLocaleString()}<br>
+    <strong>Total Corpus Payment:</strong> ₹${totalCorpus.toLocaleString()}<br>
+    <strong>Total Shifting Charges:</strong> ₹${totalShifting.toLocaleString()}<br>
+    <strong>TDR / Premiums:</strong> ₹${tdrPremiums.toLocaleString()}<br>
+    <strong>Govt Premiums:</strong> ₹${govPremiums.toLocaleString()}<br>
+    <strong>Finance Cost:</strong> ₹${financeCost.toLocaleString()}<br>
+    <strong>Marketing & Sales:</strong> ₹${marketing.toLocaleString()}<br>
+    <strong>Legal & Misc:</strong> ₹${legalMisc.toLocaleString()}<br><br>
+
+    <strong>Total Project Cost:</strong> ₹${totalCost.toLocaleString()}<br>
+    <strong>Total Profit:</strong> ₹${profit.toLocaleString()}<br>
+    <strong>Profit Margin:</strong> ${profitMargin.toFixed(2)} %
+  `;
+}
+</script>
+
+</body>
+</html>
